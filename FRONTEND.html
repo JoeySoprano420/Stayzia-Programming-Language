@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stayzia Web Interface</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        textarea { width: 100%; height: 200px; }
+        button { margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Stayzia Language Runner</h1>
+    <textarea id="codeInput" placeholder="Write Stayzia code here..."></textarea>
+    <br>
+    <button onclick="compileCode()">Compile</button>
+    <button onclick="interpretCode()">Run in Interpreter</button>
+
+    <script>
+        function compileCode() {
+            const code = document.getElementById('codeInput').value;
+            alert("Compiling: " + code);
+            // Send code to backend for compilation (to be implemented)
+        }
+
+        function interpretCode() {
+            const code = document.getElementById('codeInput').value;
+            alert("Interpreting: " + code);
+            // Send code to backend for interpretation (to be implemented)
+        }
+    </script>
+</body>
+</html>
