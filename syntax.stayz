@@ -1,0 +1,15 @@
+struc. Point [ x: i32, y: i32 ]
+# Defines a Point with two immutable integer fields.
+
+struc. Rectangle [ top left: Point, bottom right: Point ]
+# A Rectangle made up of two Points: the top-left and bottom-right corners.
+
+fn. calculate area [ rect: Rectangle ] i32
+    area = [ rect.bottom right.x - rect.top left.x ] * 
+           [ rect.bottom right.y - rect.top left.y ]
+    return area
+endfn
+
+CACHED assign immutable value [ x: i32, y: i32 ] CachedValue
+    return Point [ x, y ]
+endfn
