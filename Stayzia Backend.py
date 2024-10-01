@@ -98,3 +98,18 @@ class StayziaInterpreter:
     def run(self, code):
         # Placeholder for interpreter logic; implement your runtime execution here
         print("Interpreting Stayzia code...")
+
+from flask import Flask, request, jsonify
+import logging
+
+app = Flask(__name__)
+backend = StayziaBackend()
+
+@app.route('/execute', methods=['POST'])
+def execute_code():
+    code = request.json.get('code')
+    result = backend.execute(code)
+    return jsonify(result)
+
+if __name__ == '__main__':
+    app.run(debug=True)
