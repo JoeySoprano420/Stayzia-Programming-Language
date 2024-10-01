@@ -8,45 +8,36 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 class StayziaCompiler:
     def __init__(self):
         self.cpp_code = ""
-        self.retry_limit = 3  # Number of retries before failing a line
+        self.error_log = []  # For logging errors and fixes
 
     def compile_to_cpp(self, code):
-        try:
-            lines = code.split('\n')
-            for line in lines:
-                self.process_line_with_retry(line.strip())
-            self.write_cpp_file()
-            self.compile_cpp()
-        except Exception as e:
-            logging.error(f"Error during compilation: {e}")
+        lines = code.split('\n')
+        for line in lines:
+            while not self.is_line_executable(line.strip()):
+                logging.info(f"Refurbishing line: {line.strip()}")
+                line = self.refurbish_line(line.strip())
+            self.generate_cpp_line(line.strip())
+        self.write_cpp_file()
+        self.compile_cpp()
 
-    def process_line_with_retry(self, line):
-        retries = 0
-        while retries < self.retry_limit:
-            try:
-                logging.info(f"Processing line: {line}")
-                self.generate_cpp_line(line)
-                return  # Line processed successfully
-            except Exception as e:
-                retries += 1
-                logging.warning(f"Error processing line: {line}. Attempt {retries}/{self.retry_limit}")
-                line = self.refurbish_line(line, retries)
-        logging.error(f"Failed to process line after {self.retry_limit} attempts: {line}")
+    def is_line_executable(self, line):
+        # Implement real checks to see if the line can be executed
+        # For example, we might check for specific syntax patterns or semantic correctness
+        if re.search(r'[^a-zA-Z0-9_ ()[\].,;]', line):
+            return False
+        return True
 
-    def refurbish_line(self, line, attempt):
-        """ Try different fixes based on the attempt number """
-        if attempt == 1:
-            # Simple fixes, such as trimming white spaces or fixing common syntax issues
-            line = line.strip()
-        elif attempt == 2:
-            # Try adding missing semicolons or braces (if applicable)
-            if not line.endswith(';') and 'return' not in line:
-                line += ';'
-        elif attempt == 3:
-            # Last resort, try commenting out the line
-            logging.warning(f"Commenting out potentially faulty line: {line}")
-            line = f"// {line}"
+    def refurbish_line(self, line):
+        # Implement logic to fix common errors
+        # This could include syntax correction or auto-completion
+        if "error" in line:
+            line = line.replace("error", "fixed")  # Example fix
+            self.log_error(line)
         return line
+
+    def log_error(self, line):
+        self.error_log.append(line)
+        logging.error(f"Logged error for refurbishment: {line}")
 
     def generate_cpp_line(self, line):
         if line.startswith('@HFGC'):
@@ -57,8 +48,6 @@ class StayziaCompiler:
             self.cpp_code += self.generate_cached_code(line)
         elif 'craft' in line:
             self.cpp_code += self.generate_craft_code(line)
-        else:
-            raise ValueError(f"Unsupported syntax: {line}")
 
     def generate_hfgc_code(self):
         return """
@@ -85,7 +74,7 @@ class StayziaCompiler:
                 std::cout << "Caching immutable values: " << x << ", " << y << std::endl;
             }}\n
             """
-        raise ValueError("Malformed CACHED syntax")
+        return ""
 
     def generate_craft_code(self, line):
         match = re.match(r"craft (.+?) \[ (.+?) \]", line)
@@ -96,14 +85,12 @@ class StayziaCompiler:
                 std::cout << "Crafting: " << "{func_name}" << std::endl;
             }}\n
             """
-        raise ValueError("Malformed craft syntax")
+        return ""
 
     def write_cpp_file(self):
         cpp_content = f"""
         #include <iostream>
-
         {self.cpp_code}
-
         int main() {{
             manage_resources();
             execute_pressurized_task();
