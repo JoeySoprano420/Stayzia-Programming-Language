@@ -1,44 +1,30 @@
 class StayziaInterpreter:
     def __init__(self):
         self.variables = {}
-        self.retry_limit = 3  # Number of retries per line
+        self.error_log = []  # For logging errors and fixes
 
     def run(self, code):
-        try:
-            lines = code.split('\n')
-            for line in lines:
-                self.process_line_with_retry(line.strip())
-        except Exception as e:
-            logging.error(f"Error during interpretation: {e}")
+        lines = code.split('\n')
+        for line in lines:
+            while not self.is_line_executable(line.strip()):
+                logging.info(f"Refurbishing line: {line.strip()}")
+                line = self.refurbish_line(line.strip())
+            self.interpret_line(line.strip())
 
-    def process_line_with_retry(self, line):
-        retries = 0
-        while retries < self.retry_limit:
-            try:
-                logging.info(f"Processing line: {line}")
-                self.interpret_line(line)
-                return  # Line processed successfully
-            except Exception as e:
-                retries += 1
-                logging.warning(f"Error processing line: {line}. Attempt {retries}/{self.retry_limit}")
-                line = self.refurbish_line(line, retries)
-        logging.error(f"Failed to process line after {self.retry_limit} attempts: {line}")
+    def is_line_executable(self, line):
+        # Implement checks for executable code
+        return "error" not in line and line.strip() != ""
 
-    def refurbish_line(self, line, attempt):
-        """ Apply fixes to the line based on the number of attempts """
-        if attempt == 1:
-            # Simple syntax cleanup
-            line = line.strip()
-        elif attempt == 2:
-            # Try defaulting missing values or variables
-            if 'CACHED' in line and 'x' not in self.variables:
-                self.variables['x'] = 0  # Default x to 0 if undefined
-                self.variables['y'] = 0  # Default y to 0 if undefined
-        elif attempt == 3:
-            # Final attempt: comment out the line
-            logging.warning(f"Commenting out problematic line: {line}")
-            line = f"# {line}"
+    def refurbish_line(self, line):
+        # Attempt to fix the line
+        if "error" in line:
+            line = line.replace("error", "fixed")  # Example fix
+            self.log_error(line)
         return line
+
+    def log_error(self, line):
+        self.error_log.append(line)
+        logging.error(f"Logged error for refurbishment: {line}")
 
     def interpret_line(self, line):
         if line.startswith('@HFGC'):
@@ -47,10 +33,10 @@ class StayziaInterpreter:
             self.execute_pressurized_task()
         elif 'CACHED' in line:
             self.cached_assign(line)
+        elif '@OTF' in line:
+            self.debug_cycle()
         elif 'craft' in line:
             self.craft_function(line)
-        else:
-            raise ValueError(f"Unsupported syntax: {line}")
 
     def hfgc_manage_resources(self):
         logging.info("Managing resources with HFGC in the VAC Universe...")
@@ -64,13 +50,12 @@ class StayziaInterpreter:
             x, y = match.groups()
             self.variables['CachedValue'] = (int(x), int(y))
             logging.info(f"Caching immutable values: {x}, {y}")
-        else:
-            raise ValueError("Malformed CACHED syntax")
+
+    def debug_cycle(self):
+        logging.info("Running on-the-fly proofing for debugging in the VAC Universe...")
 
     def craft_function(self, line):
         match = re.match(r"craft (.+?) \[ (.+?) \]", line)
         if match:
             func_name, params = match.groups()
             logging.info(f"Crafting function: {func_name} with parameters: {params}")
-        else:
-            raise ValueError("Malformed craft syntax")
