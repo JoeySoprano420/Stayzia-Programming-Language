@@ -1,0 +1,7 @@
+# Standard Libraries (These are part of the Python standard library)
+# logging
+# re
+# subprocess
+
+# Third-party Libraries (If needed for other parts of the project)
+regex==2023.9.1   # If enhanced regex capabilities are needed beyond Python's built-in 're'
